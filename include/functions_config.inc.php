@@ -499,13 +499,25 @@ function serendipity_setAuthorToken() {
     $_SESSION['author_token'] = $hash;
 }
 
+/**
+ * Send a login code to the user's email adress, if the user has not currently already an active
+ * login code.
+ */
 function serendipity_send2faCode() {
     global $serendipity;
-    $secondFactor = bin2hex(random_bytes(3));
-    serendipity_cacheItem($serendipity['serendipityUser'] . '_2faCode', $secondFactor, 60 * 15);
-    $subject = sprintf(SECOND_FACTOR_MAIL_TITLE, $serendipity['serendipityUser']);
-    $message = sprintf(SECOND_FACTOR_MAIL, $serendipity['serendipityUser'], $secondFactor);
-    return serendipity_sendMail($serendipity['serendipityEmail'], $subject, $message, $serendipity['blogMail']);
+    $storedSecondFactor = serendipity_getCacheItem($serendipity['serendipityUser'] . '_2faCode');
+    if (! $storedSecondFactor) {
+        $secondFactor = bin2hex(random_bytes(3));
+        
+        $subject = sprintf(SECOND_FACTOR_MAIL_TITLE, $serendipity['serendipityUser']);
+        $message = sprintf(SECOND_FACTOR_MAIL, $serendipity['serendipityUser'], $secondFactor);
+        if (serendipity_sendMail($serendipity['serendipityEmail'], $subject, $message, $serendipity['blogMail'])) {
+            return serendipity_cacheItem($serendipity['serendipityUser'] . '_2faCode', $secondFactor, 60 * 15);
+        } else {
+            return false;
+        }
+    }
+    return false;
 }
 
 function serendipity_validate2faCode() {
@@ -757,27 +769,17 @@ function serendipity_restoreVar(&$source, &$target) {
 function serendipity_setCookie($name, $value, $securebyprot = true, $custom_timeout = false, $httpOnly = false, $samesite = 'Strict') {
     global $serendipity;
 
-    $host = $_SERVER['HTTP_HOST'];
     if ($securebyprot) {
         $secure = (array_key_exists('HTTPS', $_SERVER) && strtolower($_SERVER['HTTPS']) == 'on') ? true : false;
-        if ($pos = strpos($host, ":")) {
-            $host = substr($host, 0, $pos);
-        }
     } else {
         $secure = false;
-    }
-
-    // If HTTP-Hosts like "localhost" are used, current browsers reject cookies.
-    // In this case, we disregard the HTTP host to be able to set that cookie.
-    if (substr_count($host, '.') < 1) {
-        $host = '';
     }
 
     if ($custom_timeout === false) {
         $custom_timeout = time() + 60*60*24*30;
     }
 
-    setcookie("serendipity[$name]", $value, ['expires' => $custom_timeout, 'path' => $serendipity['serendipityHTTPPath'], 'domain' => $host, 'secure' => $secure, 'httponly' => $httpOnly, 'samesite' => $samesite]);
+    setcookie("serendipity[$name]", $value, ['expires' => $custom_timeout, 'path' => $serendipity['serendipityHTTPPath'], 'secure' => $secure, 'httponly' => $httpOnly, 'samesite' => $samesite]);
     $_COOKIE[$name] = $value;
     $serendipity['COOKIE'][$name] = $value;
 }
@@ -802,7 +804,7 @@ function serendipity_JSsetCookie($name, $value) {
 
 
 /**
- * Deletes an existing cookie value
+ * Deletes an existing cookie value by resetting it with an expired time
  *
  * LONG
  *
@@ -813,18 +815,7 @@ function serendipity_JSsetCookie($name, $value) {
 function serendipity_deleteCookie($name) {
     global $serendipity;
 
-    $host = $_SERVER['HTTP_HOST'];
-    if ($pos = strpos($host, ":")) {
-        $host = substr($host, 0, $pos);
-    }
-
-    // If HTTP-Hosts like "localhost" are used, current browsers reject cookies.
-    // In this case, we disregard the HTTP host to be able to set that cookie.
-    if (substr_count($host, '.') < 1) {
-        $host = '';
-    }
-
-    setcookie("serendipity[$name]", '', time()-4000, $serendipity['serendipityHTTPPath'], $host);
+    setcookie("serendipity[$name]", '', time()-4000, $serendipity['serendipityHTTPPath']);
     unset($_COOKIE[$name]);
     unset($serendipity['COOKIE'][$name]);
 }
