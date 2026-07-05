@@ -656,7 +656,7 @@ function serendipity_authenticate_author($username = '', $password = '', $is_has
                     }
 
                     serendipity_load_userdata($username);
-                    if ($serendipity['POST']['2fa'] || $serendipity['POST']['user']) {
+                    if (($serendipity['POST']['2fa'] ?? false) || ($serendipity['POST']['user'] ?? false)) {
                         # serendipity_load_userdata sets serendipity2faSuccess to true for cookie logins,
                         # but here, on a POST login, it is always still false
                         $_SESSION['serendipity2faSuccess'] = false;
@@ -720,16 +720,18 @@ function serendipity_load_userdata($username) {
 function serendipity_userLoggedIn() {
     global $serendipity;
     if (IS_installed) {
-		$secondFactorEnabled = serendipity_db_bool(serendipity_get_user_config_var('second_factor', $serendipity['authorid'], false));
-        if ($secondFactorEnabled) {
-            // Only check for serendipity2faSuccess if config is active
-            serendipity_validate2faCode();
-            if (($_SESSION['serendipityAuthedUser'] ?? false) === true && $_SESSION['serendipity2faSuccess']) {
-                return true;
-            }
-        } else {
-            if (($_SESSION['serendipityAuthedUser'] ?? false) === true) {
-                return true;
+        if (array_key_exists('authorid', $serendipity)) {
+            $secondFactorEnabled = serendipity_db_bool(serendipity_get_user_config_var('second_factor', $serendipity['authorid'], false));
+            if ($secondFactorEnabled) {
+                // Only check for serendipity2faSuccess if config is active
+                serendipity_validate2faCode();
+                if (($_SESSION['serendipityAuthedUser'] ?? false) === true && $_SESSION['serendipity2faSuccess']) {
+                    return true;
+                }
+            } else {
+                if (($_SESSION['serendipityAuthedUser'] ?? false) === true) {
+                    return true;
+                }
             }
         }
 	}

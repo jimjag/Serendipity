@@ -1087,7 +1087,7 @@ function serendipity_printEntries($entries, $extended = 0, $preview = false, $sm
     // Bypass cache for entry/staticpage preview, comment preview and submission feedback
     $bypass_cache = $preview || !empty($serendipity['POST']['preview']) || !empty($serendipity['POST']['submit']) || !empty($serendipity['GET']['csuccess']);
     if ($serendipity['useInternalCache']) {
-        $cache_key = md5(serialize($initial_args) . '||' . $serendipity['GET']['subpage'] . '||' .  serendipity_checkPermission('adminEntriesMaintainOthers') . (!empty($serendipity['lang']) ? '||' . $serendipity['lang'] : ''));
+        $cache_key = md5(serialize($initial_args) . '||' . ($serendipity['GET']['subpage'] ?? '') . '||' .  serendipity_checkPermission('adminEntriesMaintainOthers') . (!empty($serendipity['lang']) ? '||' . $serendipity['lang'] : ''));
 
         $cached = serendipity_getCacheItem($cache_key);
         if (!$bypass_cache && $cached && $cached !== false) {
