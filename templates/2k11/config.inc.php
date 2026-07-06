@@ -27,6 +27,7 @@ if (is_array($required_fieldlist)) {
 }
 
 $serendipity['smarty']->assign('is_templatechooser', $_SESSION['serendipityUseTemplate'] ?? null);
+use function PHP81_BC\strftime;
 
 $template_config = array(
     array(

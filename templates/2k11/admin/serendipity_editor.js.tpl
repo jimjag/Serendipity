@@ -1782,7 +1782,7 @@ $(function() {
     })
 
     // Tabs
-     if ($('.details-tabs').length > 0) {
+    if ($('.details-tabs').length > 0) {
         // Restore the tab that was active before
         activeTab = serendipity.GetCookie('accessibletab_' + $('.details-tabs').attr('id') + '_active');
         $('.details-tabs > details > summary').click(function(e) {
@@ -1791,7 +1791,9 @@ $(function() {
             $('.details-tabs').find('details').removeAttr('open');
             document.cookie = 'accessibletab_' + $('.tabs').attr('id') + '_active=' + $el.index() + ';expires=Session' ;
         });
-        $('.details-tabs > details > summary').get(activeTab).click();
+        if (activeTab) {
+            $('.details-tabs > details > summary').get(activeTab).click();
+        }
     }
 
 
